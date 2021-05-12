@@ -1,0 +1,47 @@
+package com.example.creationfirebase.api;
+
+import com.example.creationfirebase.models.User;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
+
+public class UserHelper {
+
+    private static final String COLLECTION_NAME = "users";
+
+    // --- COLLECTION REFERENCE ---
+
+    public static CollectionReference getUsersCollection(){
+        return FirebaseFirestore.getInstance().collection(COLLECTION_NAME);
+    }
+
+    // --- CREATE ---
+
+    public static com.google.android.gms.tasks.Task<Void> createUser(String uid, String username, String urlPicture) {
+        User userToCreate = new User(uid, username, urlPicture);
+        return UserHelper.getUsersCollection().document(uid).set(userToCreate);
+    }
+
+    // --- GET ---
+
+    public static com.google.android.gms.tasks.Task<DocumentSnapshot> getUser(String uid){
+        return UserHelper.getUsersCollection().document(uid).get();
+    }
+
+    // --- UPDATE ---
+
+    public static com.google.android.gms.tasks.Task<Void> updateUsername(String username, String uid) {
+        return UserHelper.getUsersCollection().document(uid).update("username", username);
+    }
+
+    public static com.google.android.gms.tasks.Task<Void> updateIsMentor(String uid, Boolean isMentor) {
+        return UserHelper.getUsersCollection().document(uid).update("isMentor", isMentor);
+    }
+
+    // --- DELETE ---
+
+    public static Task<Void> deleteUser(String uid) {
+        return UserHelper.getUsersCollection().document(uid).delete();
+    }
+}
