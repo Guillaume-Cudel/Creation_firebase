@@ -22,10 +22,22 @@ public class MessageHelper {
 
     public static Task<DocumentReference> createMessageForChat(String textMessage, String chat, User userSender){
 
-        // 1 - Create the Message object
+        // Create the Message object
         Message message = new Message(textMessage, userSender);
 
-        // 2 - Store Message to Firestore
+        //  Store Message to Firestore
+        return ChatHelper.getChatCollection()
+                .document(chat)
+                .collection(COLLECTION_NAME)
+                .add(message);
+    }
+
+    public static Task<DocumentReference> createMessageWithImageForChat(String urlImage, String textMessage, String chat, User userSender){
+
+        //  Creating Message with the URL image
+        Message message = new Message(textMessage, urlImage, userSender);
+
+        //  Storing Message on Firestore
         return ChatHelper.getChatCollection()
                 .document(chat)
                 .collection(COLLECTION_NAME)

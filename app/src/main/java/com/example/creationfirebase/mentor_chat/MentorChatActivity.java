@@ -27,6 +27,11 @@ import com.firebase.ui.firestore.FirestoreRecyclerOptions;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.Query;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
+
+import java.util.UUID;
 
 import butterknife.OnClick;
 import pub.devrel.easypermissions.AfterPermissionGranted;
@@ -101,13 +106,21 @@ public class MentorChatActivity extends BaseActivity implements MentorChatAdapte
         binding.activityMentorChatSendButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // 1 - Check if text field is not empty and current user properly downloaded from Firestore
-                if (!TextUtils.isEmpty(binding.activityMentorChatMessageEditText.getText()) && modelCurrentUser != null){
-                    // 2 - Create a new Message to Firestore
+                //  Check if text field is not empty and current user properly downloaded from Firestore
+                if (!TextUtils.isEmpty(binding.activityMentorChatMessageEditText.getText()) && modelCurrentUser != null) {
+                    // Check if the ImageView is set
+                    if (binding.activityMentorChatImageChosenPreview.getDrawable() == null){
+                    //  Create a new Message to Firestore
                     MessageHelper.createMessageForChat(binding.activityMentorChatMessageEditText.getText().toString(),
                             currentChatName, modelCurrentUser).addOnFailureListener(onFailureListener());
-                    // 3 - Reset text field
+                    // Reset text field
                     binding.activityMentorChatMessageEditText.setText("");
+                    }   else {
+                        // SEND A IMAGE + TEXT IMAGE
+                        uploadPhotoInFirebaseAndSendMessage(binding.activityMentorChatMessageEditText.getText().toString());
+                       binding.activityMentorChatMessageEditText.setText("");
+                       binding.activityMentorChatImageChosenPreview.setImageDrawable(null);
+                    }
                 }
             }
         });
@@ -168,6 +181,23 @@ public class MentorChatActivity extends BaseActivity implements MentorChatAdapte
                 }
             });
         }
+
+    //  Upload a picture in Firebase and send a message
+    private void uploadPhotoInFirebaseAndSendMessage(final String message) {
+        String uuid = UUID.randomUUID().toString(); // GENERATE UNIQUE STRING
+        // A - UPLOAD TO GCS
+        StorageReference mImageRef = FirebaseStorage.getInstance().getReference(uuid);
+        mImageRef.putFile(this.uriImageSelected)
+                .addOnSuccessListener(this, new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                    @Override
+                    public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                        String pathImageSavedInFirebase = taskSnapshot.getMetadata().getDownloadUrl().toString();
+                        // B - SAVE MESSAGE IN FIRESTORE
+                        MessageHelper.createMessageWithImageForChat(pathImageSavedInFirebase, message, currentChatName, modelCurrentUser).addOnFailureListener(onFailureListener());
+                    }
+                })
+                .addOnFailureListener(this.onFailureListener());
+    }
 
         // --------------------
         // UI
